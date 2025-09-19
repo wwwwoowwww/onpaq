@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ร้านค้าออนไลน์ Modern Animated</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; font-family:'Inter', sans-serif; }
+body {
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:20px;
+  background: linear-gradient(-45deg, #6b4b9a, #4b3675, #8e71d9, #d6c1f5);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
+}
+@keyframes gradientMove {
+  0% { background-position:0% 50%; }
+  50% { background-position:100% 50%; }
+  100% { background-position:0% 50%; }
+}
+.shop-container { width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center; }
+.product-card { background:#fff; border-radius:20px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 15px 40px rgba(0,0,0,0.2); width:100%; max-width:900px; transition:0.3s; margin-bottom:20px; }
+.product-card:hover { transform:translateY(-5px); box-shadow:0 20px 50px rgba(0,0,0,0.25); }
+.product-image { width:100%; height:400px; object-fit:cover; }
+.product-top { padding:20px; text-align:center; background:#6b4b9a; color:#fff; }
+.product-top h3 { font-size:24px; margin:10px 0; }
+.product-top p { font-size:16px; margin:5px 0; }
+.product-bottom { padding:20px; display:flex; flex-direction:column; gap:12px; }
+.product-bottom p { font-size:15px; color:#333; }
+.product-bottom a { color:#6b4b9a; text-decoration:none; font-weight:600; }
+.buy-btn { padding:15px; border:none; border-radius:12px; background:#4b3675; color:#fff; font-size:16px; font-weight:600; cursor:pointer; transition:0.25s; }
+.buy-btn:hover { background:#6b4b9a; transform:scale(1.05); }
+.buy-btn:disabled { background:#aaa; cursor:not-allowed; }
+.product-slider { display:flex; overflow-x:auto; gap:15px; margin-top:20px; padding:10px; background:rgba(255,255,255,0.95); border-radius:15px; box-shadow:0 10px 20px rgba(0,0,0,0.15); width:100%; }
+.product-slider::-webkit-scrollbar { height:8px; }
+.product-slider::-webkit-scrollbar-thumb { background:#6b4b9a; border-radius:4px; }
+.slider-item { flex:0 0 100px; height:100px; border-radius:12px; overflow:hidden; border:2px solid transparent; cursor:pointer; transition:0.25s; position:relative; }
+.slider-item.active { border:2px solid #4b3675; }
+.slider-item img { width:100%; height:100%; object-fit:cover; border-radius:12px; }
+.slider-item span { position:absolute; top:5px; left:5px; background:red; color:#fff; font-size:11px; padding:1px 5px; border-radius:4px; }
+.cart-btn { margin:20px auto; padding:14px 25px; border:none; border-radius:12px; background:#4b3675; color:#fff; font-weight:700; font-size:16px; cursor:pointer; transition:0.2s; }
+.cart-btn:hover { background:#6b4b9a; }
+.balance-display { text-align:center; font-weight:700; color:#fff; font-size:17px; margin-top:10px; text-shadow:1px 1px 3px rgba(0,0,0,0.3); }
+.cart-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; z-index:1000; }
+.cart-popup { background:#fff; border-radius:20px; padding:25px; width:90%; max-width:450px; max-height:80%; overflow-y:auto; position:relative; box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+.cart-popup h3 { margin-top:0; font-size:22px; text-align:center; }
+.cart-popup .close-btn { position:absolute; top:15px; right:15px; font-size:20px; background:none; border:none; cursor:pointer; }
+.cart-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:15px; }
+.cart-item button { display:none; } /* ปิดปุ่ม + / - และลบ */
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 18px; border-radius:10px; opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:1100; font-size:15px; }
+.toast.show { opacity:1; }
+@media(max-width:768px){ .product-image { height:250px; } .slider-item { flex:0 0 70px; height:70px; } .balance-display { font-size:15px; } }
+</style>
+</head>
+<body>
+
+<div class="shop-container">
+  <div class="product-card">
+    <div class="product-top">
+      <img id="mainImage" class="product-image">
+      <h3 id="productName"></h3>
+      <p id="productPrice"></p>
+      <p id="productStock"></p>
+    </div>
+    <div class="product-bottom">
+      <p id="productDesc"></p>
+      <p>ติดต่ออีเมล: <a href="mailto:supplier@example.com">supplier@example.com</a></p>
+      <p>ลิงค์ Discord: <a href="https://discord.gg/example" target="_blank">เข้าร่วม Discord</a></p>
+      <button class="buy-btn" id="buyBtn" onclick="addToCart()">เพิ่มไปที่ตะกร้า</button>
+    </div>
+  </div>
+  <div class="product-slider" id="productSlider"></div>
+  <button class="cart-btn" onclick="toggleCart()">🛒 ตะกร้า (<span id="cartCount">0</span>)</button>
+  <div class="balance-display">ยอดเงินคงเหลือ: <span id="userBalance">1000</span>฿</div>
+</div>
+
+<div class="cart-overlay" id="cartOverlay">
+  <div class="cart-popup">
+    <button class="close-btn" onclick="toggleCart()">✖</button>
+    <h3>ตะกร้าสินค้า</h3>
+    <div id="cartItems"></div>
+    <p><strong>รวมทั้งหมด: <span id="cartTotal">0</span>฿</strong></p>
+    <button onclick="checkout()" style="padding:10px; width:100%; border:none; border-radius:12px; background:#4b3675; color:#fff; cursor:pointer; font-weight:700;">ชำระเงินทั้งหมด</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let userBalance = localStorage.getItem('userBalance') ? parseInt(localStorage.getItem('userBalance')) : 1000;
+let cart = localStorage.getItem('cart') ? JSON.parse(localStorage.getItem('cart')) : [];
+const products = [];
+for(let i=1;i<=8;i++){
+  products.push({name:`สินค้า ${i}`, price:50+i*20, stock:5, img:`https://via.placeholder.com/400x300?text=สินค้า${i}`, desc:`รายละเอียดสินค้า ${i}`});
+}
+let currentIndex = 0;
+
+const slider = document.getElementById('productSlider');
+
+function renderSlider(){
+  slider.innerHTML='';
+  products.forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.className='slider-item'+(i===currentIndex?' active':'');
+    div.innerHTML=`<img src="${p.img}">`;
+    if(p.stock===0) div.innerHTML += <span>หมด</span>;
+    div.onclick=()=>selectProduct(i);
+    slider.appendChild(div);
+  });
+}
+
+function selectProduct(i){
+  currentIndex=i;
+  const p=products[i];
+  document.getElementById('mainImage').src=p.img;
+  document.getElementById('productName').textContent=p.name;
+  document.getElementById('productPrice').textContent=`ราคา: ${p.price}฿`;
+  document.getElementById('productStock').textContent=`สต็อก: ${p.stock}`;
+  document.getElementById('productDesc').textContent=p.desc;
+  document.querySelectorAll('.slider-item').forEach((el,j)=>el.classList.toggle('active',j===i));
+  document.getElementById('buyBtn').disabled=p.stock===0;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>{ t.classList.remove('show'); },2000);
+}
+
+// เพิ่มสินค้าแค่ทีละชิ้น
+function addToCart(){
+  const p = products[currentIndex];
+  const index = cart.findIndex(c => c.name === p.name);
+  if(index > -1){
+    showToast('คุณมีสินค้านี้อยู่ในตะกร้าแล้ว');
+    return; 
+  } else {
+    cart.push({name: p.name, price: p.price, qty:1, stock: p.stock});
+  }
+  saveCart();
+  updateCart();
+  showToast(${p.name} ถูกเพิ่มไปที่ตะกร้า);
+}
+
+function saveCart(){
+  localStorage.setItem('cart', JSON.stringify(cart));
+  localStorage.setItem('userBalance', userBalance);
+}
+
+function updateCart(){
+  const container=document.getElementById('cartItems');
+  container.innerHTML='';
+  let total=0,count=0;
+  cart.forEach((c)=>{
+    total += c.price * c.qty;
+    count += c.qty;
+    const div=document.createElement('div');
+    div.className='cart-item';
+    div.textContent = ${c.name} x ${c.qty} = ${c.price*c.qty}฿;
+    container.appendChild(div);
+  });
+  document.getElementById('cartTotal').textContent=total;
+  document.getElementById('cartCount').textContent=count;
+}
+
+function checkout(){
+  let total=cart.reduce((sum,c)=>sum+c.price*c.qty,0);
+  if(total>userBalance){ showToast('ยอดเงินไม่พอ'); return; }
+  cart.forEach(c=>{
+    const p=products.find(pr=>pr.name===c.name);
+    if(p) p.stock-=c.qty;
+  });
+  userBalance -= total;
+  localStorage.setItem('userBalance', userBalance);
+  cart = [];
+  saveCart();
+  updateCart();
+  selectProduct(currentIndex);
+  renderSlider();
+  toggleCart();
+  document.getElementById('userBalance').textContent = userBalance;
+  showToast(ชำระเงินเรียบร้อย: ${total}฿);
+}
+
+function toggleCart(){
+  const overlay=document.getElementById('cartOverlay');
+  overlay.style.display=(overlay.style.display==='flex'?'none':'flex');
+}
+
+document.getElementById('userBalance').textContent=userBalance;
+renderSlider();
+selectProduct(currentIndex);
+updateCart();
+</script>
+
+</body>
+</html>
